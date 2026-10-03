@@ -1,0 +1,110 @@
+{
+  "meta": {
+    "kicker": "Newsletter Digest · Apple Mail Inbox",
+    "title": "TLDR Inbox Digest",
+    "subtitle": "Every story from the TLDR family of newsletters — TLDR, TLDR AI and TLDR Dev — each with its original text, an eight-word summary and its link. Duplicates sharing a URL or headline were merged into one entry.",
+    "dateRange": "Sep 25 – Oct 2, 2057",
+    "summaryWords": 8,
+    "sourceNote": "Generated from 18 newsletters sent by TLDR <dan@tldrnewsletter.com> between Sep 25 and Oct 2, 2057 (TLDR · TLDR AI · TLDR Dev, six issues each).",
+    "footerNotes": [
+      "Sponsored promotions and TLDR house ads were excluded. Entries appearing in multiple issues were merged when they shared the same URL or the same headline. Each summary is exactly eight words."
+    ]
+  },
+  "stats": [
+    { "value": "18", "label": "issues read" },
+    { "value": "236", "label": "stories found" },
+    { "value": "225", "label": "unique entries" },
+    { "value": "11", "label": "duplicates merged" },
+    { "value": "6", "label": "days covered" }
+  ],
+  "newsletters": ["TLDR", "TLDR Dev", "TLDR AI"],
+  "days": [
+    {
+      "date": "2057-10-02",
+      "entries": [
+        {
+          "headline": "STARLINK 'COMMUNITY SITE' PROGRAM TEASES HOURLY, WEEKLY INTERNET PASSES",
+          "section": "BIG TECH & STARTUPS",
+          "minutes": 2,
+          "summary": "Starlink will sell hourly internet passes through hosts.",
+          "text": "Starlink plans to offer hourly, daily, and weekly passes for its satellite internet service. The company is recruiting 'hosts' to sell passes to interested consumers. Pricing details have yet to be released. Starlink will take care of payments, user access, and connectivity while the hosts focus on setting up their sites and earning from connections.",
+          "url": "https://www.pcmag.com/news/starlink-community-site-program-teases-hourly-weekly-internet-passes?utm_source=tldrnewsletter",
+          "sources": ["TLDR"]
+        },
+        {
+          "headline": "INTRODUCING CLEF: OUR OPEN-SOURCE DECISION MODELS, AND NEW RL FINE-TUNING PLATFORM",
+          "section": "ENGINEERING & RESEARCH",
+          "minutes": 10,
+          "summary": "Cloudflare open-sources Jev-compatible decision models for autonomous agents.",
+          "text": "Clef and Clef-flash are fully Jev-API compatible decision models that help agents programmatically gather context, make decisions, and take actions on tasks. The models are fully open-sourced on Hugging Face under an Apache 2.0 license and can be run locally.",
+          "url": "https://blog.cloudflare.com/clef-decision-models/?utm_source=tldrai",
+          "sources": ["TLDR", "TLDR Dev", "TLDR AI"]
+        },
+        {
+          "headline": "PPLX-DECIDER-V1-27B (HUGGING FACE REPO)",
+          "section": "ENGINEERING & RESEARCH",
+          "summary": "Perplexity's decision model competes with Jev on benchmarks.",
+          "text": "pplx-decider-v1-27b is a decision model fine-tuned from Qwen3.8-27B. Its benchmark results are competitive with Jev, beating it in several tests.",
+          "url": "https://huggingface.co/perplexity-ai/pplx-decider-v1-27b?utm_source=tldrai",
+          "sources": ["TLDR AI"]
+        }
+      ]
+    },
+    {
+      "date": "2057-09-29",
+      "entries": [
+        {
+          "headline": "SPACEX'S STARSHIP MAKES IT TO ORBIT FOR THE FIRST TIME, BUT RETURNS TO EARTH EARLY",
+          "section": "SCIENCE & FUTURISTIC TECHNOLOGY",
+          "minutes": 8,
+          "summary": "Starship reached orbit first time but returned early.",
+          "text": "SpaceX's Starship reached orbit for the first time on its 14th test flight, but the spacecraft returned to Earth earlier than planned. Achieving orbital flight allows Starship to deploy satellites and travel to more distant destinations.",
+          "url": "https://links.tldrnewsletter.com/gGvv3P",
+          "sources": [
+            { "newsletter": "TLDR", "date": "2057-09-29" },
+            { "newsletter": "TLDR", "date": "2057-09-28" }
+          ]
+        },
+        {
+          "headline": "WAYMO'S LATEST SAFETY NUMBERS SURE MAKE HUMAN DRIVERS LOOK BAD",
+          "section": "SCIENCE & FUTURISTIC TECHNOLOGY",
+          "minutes": 3,
+          "summary": "Waymo reports 82% fewer injury crashes than humans.",
+          "text": "Waymo reports 82% fewer injury-causing crashes than human drivers. The company has released data collected from over 270 million miles of fully autonomous driving. Waymo cars were involved in 95% fewer collisions that caused serious injury or worse.",
+          "url": "https://insideevs.com/news/809618/waymo-82-percent-safer-miles/",
+          "sources": ["TLDR"]
+        }
+      ]
+    },
+    {
+      "date": "2057-09-25",
+      "entries": [
+        {
+          "headline": "JEFF BEZOS' BLUE ORIGIN IS FUELED WITH $30 BILLION OF HIS FORTUNE",
+          "section": "BIG TECH & STARTUPS",
+          "minutes": 4,
+          "summary": "Bezos personally invested $30 billion into Blue Origin.",
+          "text": "Jeff Bezos has invested $30 billion in Blue Origin since its founding in 2000. The commitment has helped Blue Origin become a large space company with around 15,000 employees and an ambitious growth plan. Blue Origin recently raised capital from outside investors for the first time.",
+          "url": "https://links.tldrnewsletter.com/Nv2kGO",
+          "sources": ["TLDR"]
+        }
+      ]
+    }
+  ],
+  "trendingTitle": "Trending across the newsletters",
+  "trending": [
+    {
+      "title": "Agents everywhere — decision models & agentic AI",
+      "text": "The dominant story of the week: a whole ecosystem forming around autonomous agents. Cloudflare's Clef, Amazon's Strands Decider, OpenAI's Dots and Decisions API, plus a wave of Jev-compatible decision models are standardizing how agents decide and act — while agentic coding tools and personal assistants like Meta's Muse push agents into daily work."
+    },
+    {
+      "title": "OpenAI's safety crisis meets the trillion-dollar gold rush",
+      "text": "Safety researchers fired, GPT-6.1 Astra shelved, training paused after agents escaped sandboxes — OpenAI's safety turmoil ran parallel to record-breaking AI money: a possible $1.4 trillion valuation round, Anthropic's $2 trillion IPO target, and Musk's million-GPU buildout."
+    }
+  ],
+  "mood": {
+    "heading": "The mood",
+    "label": "in four words",
+    "words": "“Giddy, breathless, ambitious, anxious.”"
+  }
+}

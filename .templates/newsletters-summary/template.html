@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{meta.title}} — {{meta.dateRange}}</title>
+<style>
+  /* ============================================================
+     newsletters-summary template
+     Mustache-style placeholders ({{name}}, {{#section}}…{{/section}}).
+     Fill via build.mjs, or any Mustache/Handlebars engine.
+     Brand colors: adjust the CSS variables below.
+     ============================================================ */
+  :root {
+    --bg: #f4f5fa; --card: #ffffff; --ink: #1a1d2e; --muted: #5b6178; --faint: #8b90a5;
+    --line: #e5e7f0; --accent: #4f46e5; --accent-soft: #eef2ff;
+    --gold: #b45309;
+    /* newsletter badge palette (p1 … p8, cycles beyond 8) */
+    --p1: #2563eb; --p2: #7c3aed; --p3: #0d9488; --p4: #db2777;
+    --p5: #ea580c; --p6: #0284c7; --p7: #16a34a; --p8: #9333ea;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg); color: var(--ink); line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .hero {
+    background: linear-gradient(135deg, #1e1b4b 0%, #3730a3 55%, #6d28d9 100%);
+    color: #fff; padding: 56px 24px 88px; position: relative; overflow: hidden;
+  }
+  .hero::after {
+    content: ""; position: absolute; right: -120px; top: -120px; width: 420px; height: 420px;
+    border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.14), transparent 65%);
+  }
+  .hero-inner { max-width: 900px; margin: 0 auto; position: relative; z-index: 1; }
+  .hero .kicker { font-size: .78rem; letter-spacing: .22em; text-transform: uppercase; color: #c7d2fe; font-weight: 600; }
+  .hero h1 { font-size: clamp(1.9rem, 4.5vw, 3rem); font-weight: 800; letter-spacing: -.02em; margin: 10px 0 12px; }
+  .hero p.sub { color: #dfe3ff; max-width: 640px; font-size: 1.02rem; }
+  .stats { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+  .stat {
+    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.22); backdrop-filter: blur(4px);
+    border-radius: 12px; padding: 10px 16px; min-width: 108px;
+  }
+  .stat b { display: block; font-size: 1.35rem; font-weight: 800; }
+  .stat span { font-size: .74rem; color: #c7d2fe; letter-spacing: .04em; text-transform: uppercase; }
+  main { max-width: 900px; margin: -48px auto 0; padding: 0 20px 30px; position: relative; }
+  .day { margin-bottom: 34px; }
+  .day-head {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px; justify-content: space-between;
+    border-bottom: 2px solid var(--ink); padding-bottom: 8px; margin-bottom: 18px;
+  }
+  .day-head h2 { font-size: 1.28rem; font-weight: 800; letter-spacing: -.01em; }
+  .day-meta { display: flex; align-items: center; gap: 10px; }
+  .chip { font-size: .72rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; color: #fff; }
+  .count { color: var(--faint); font-size: .82rem; font-weight: 600; }
+  .cards { display: grid; gap: 14px; }
+  @media (min-width: 760px) { .cards { grid-template-columns: 1fr 1fr; } }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    padding: 18px 20px 16px; display: flex; flex-direction: column; gap: 10px;
+    box-shadow: 0 1px 2px rgba(23, 25, 60, .05); transition: box-shadow .18s ease, transform .18s ease;
+  }
+  .card:hover { box-shadow: 0 10px 26px rgba(35, 35, 90, .12); transform: translateY(-2px); }
+  .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+  .badge {
+    font-size: .68rem; font-weight: 700; letter-spacing: .03em; padding: 2px 9px; border-radius: 999px; color: #fff;
+  }
+  .badge b { font-weight: 600; opacity: .85; margin-left: 4px; }
+  .tag {
+    font-size: .66rem; font-weight: 700; letter-spacing: .07em; color: var(--muted);
+    background: #f1f2f8; border: 1px solid var(--line); padding: 2px 8px; border-radius: 6px;
+  }
+  .mins { font-size: .7rem; color: var(--faint); font-weight: 600; }
+  .merged { font-size: .68rem; color: var(--gold); font-weight: 700; background: #fff7ed; border: 1px solid #fed7aa; padding: 2px 8px; border-radius: 6px; }
+  .headline { font-size: 1.02rem; font-weight: 800; letter-spacing: .01em; line-height: 1.35; }
+  .summary {
+    background: var(--accent-soft); border-left: 3px solid var(--accent); border-radius: 0 10px 10px 0;
+    padding: 8px 12px;
+  }
+  .sum-label { display: block; font-size: .64rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 2px; }
+  .summary p { font-size: .93rem; font-weight: 600; color: #312e81; }
+  .text { font-size: .88rem; color: var(--muted); }
+  .link {
+    margin-top: auto; align-self: flex-start; font-size: .78rem; font-weight: 600; color: var(--accent);
+    text-decoration: none; border-bottom: 1px dashed #c7d2fe; padding-bottom: 1px; word-break: break-all;
+  }
+  .link:hover { border-bottom-style: solid; color: #3730a3; }
+  .link .arrow { margin-left: 4px; }
+  .trending { margin-top: 44px; }
+  .trending h2 {
+    font-size: 1.3rem; font-weight: 800; border-bottom: 2px solid var(--ink); padding-bottom: 8px; margin-bottom: 18px;
+  }
+  .trends { display: grid; gap: 14px; }
+  @media (min-width: 760px) { .trends { grid-template-columns: 1fr 1fr; } }
+  .trend {
+    background: linear-gradient(160deg, #ffffff, #f6f4ff); border: 1px solid var(--line); border-radius: 16px; padding: 20px 22px;
+  }
+  .trend .num {
+    display: inline-block; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff;
+    font-weight: 800; font-size: .85rem; text-align: center; line-height: 26px; margin-right: 8px;
+  }
+  .trend h3 { display: inline; font-size: 1.02rem; font-weight: 800; }
+  .trend p { margin-top: 10px; font-size: .88rem; color: var(--muted); }
+  .mood {
+    margin-top: 14px; background: #1e1b4b; color: #fff; border-radius: 16px; padding: 22px 24px;
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 18px;
+  }
+  .mood h3 { font-size: .8rem; letter-spacing: .16em; text-transform: uppercase; color: #a5b4fc; font-weight: 700; }
+  .mood .mood-tag { font-size: .66rem; letter-spacing: .08em; color: #818cf8; font-weight: 600; }
+  .mood p { font-size: 1.5rem; font-weight: 800; font-style: italic; letter-spacing: -.01em; }
+  footer { max-width: 900px; margin: 40px auto 0; padding: 22px 20px 44px; color: var(--faint); font-size: .78rem; border-top: 1px solid var(--line); }
+  footer p { margin-bottom: 4px; }
+  /* badge/chip palette */
+  .badge.p1, .chip.p1 { background: var(--p1); } .badge.p2, .chip.p2 { background: var(--p2); }
+  .badge.p3, .chip.p3 { background: var(--p3); } .badge.p4, .chip.p4 { background: var(--p4); }
+  .badge.p5, .chip.p5 { background: var(--p5); } .badge.p6, .chip.p6 { background: var(--p6); }
+  .badge.p7, .chip.p7 { background: var(--p7); } .badge.p8, .chip.p8 { background: var(--p8); }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="hero-inner">
+    <div class="kicker">{{meta.kicker}}</div>
+    <h1>{{meta.title}}</h1>
+    <p class="sub">{{meta.subtitle}}</p>
+    <div class="stats">
+{{#stats}}      <div class="stat"><b>{{value}}</b><span>{{label}}</span></div>
+{{/stats}}    </div>
+  </div>
+</header>
+<main>
+{{#days}}  <section class="day">
+    <div class="day-head">
+      <h2>{{label}}</h2>
+      <div class="day-meta"><span class="day-chips">{{#chips}}<span class="chip {{cls}}">{{name}}</span>{{/chips}}</span><span class="count">{{countLabel}}</span></div>
+    </div>
+    <div class="cards">
+{{#entries}}    <article class="card">
+      <div class="meta">{{#badges}}<span class="badge {{cls}}">{{name}}{{#extra}}<b>{{.}}</b>{{/extra}}</span>{{/badges}}<span class="tag">{{section}}</span>{{#mins}}<span class="mins">{{.}}</span>{{/mins}}{{#merged}}<span class="merged">⧉ {{.}}</span>{{/merged}}</div>
+      <h3 class="headline">{{headline}}</h3>
+      <div class="summary"><span class="sum-label">✦ {{summaryLabel}}</span><p>{{summary}}</p></div>
+      <p class="text">{{text}}</p>
+      <a class="link" href="{{urlHref}}" target="_blank" rel="noopener">{{urlLabel}}<span class="arrow">↗</span></a>
+    </article>
+{{/entries}}    </div>
+  </section>
+{{/days}}  <section class="trending">
+    <h2>{{trendingTitle}}</h2>
+    <div class="trends">
+{{#trending}}      <div class="trend">
+        <span class="num">{{num}}</span><h3>{{title}}</h3>
+        <p>{{text}}</p>
+      </div>
+{{/trending}}    </div>
+    <div class="mood">
+      <h3>{{mood.heading}} <span class="mood-tag">· {{mood.label}}</span></h3>
+      <p>{{mood.words}}</p>
+    </div>
+  </section>
+</main>
+<footer>
+  <p>{{meta.sourceNote}}</p>
+{{#meta.footerNotes}}  <p>{{.}}</p>
+{{/meta.footerNotes}}</footer>
+</body>
+</html>

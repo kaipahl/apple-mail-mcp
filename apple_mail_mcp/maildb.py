@@ -71,16 +71,31 @@ class MailDatabase:
     def _scan_messages_dirs(self) -> None:
         """Find all Messages/ directories under V10 (excluding MailData).
 
-        This is run once at startup. Typically finds 10-50 directories,
-        regardless of how many emails exist.
+        Handles both on-disk layouts Apple Mail has used:
+
+        - ``<mailbox>.mbox/Messages`` (older layout)
+        - ``<mailbox>.mbox/<uuid>/Data/<n>/<n>/<n>/Messages`` (current
+          Mail, where the digits encode the .emlx file number)
+
+        This is run once at startup. Finds one directory per active
+        Data/ shard - usually dozens to a few thousand, regardless of
+        how many emails exist.
         """
         self._messages_dirs = []
         if not self.v10_dir.exists():
             return
         for mbox_dir in self.v10_dir.rglob("*.mbox"):
-            messages_dir = mbox_dir / "Messages"
-            if messages_dir.is_dir():
-                self._messages_dirs.append(messages_dir)
+            # Old layout: Messages/ directly inside the .mbox bundle.
+            direct = mbox_dir / "Messages"
+            if direct.is_dir():
+                self._messages_dirs.append(direct)
+            # Current layout: nested under <uuid>/Data/<n>/<n>/<n>/.
+            # Globbing the fixed depth avoids walking the message files
+            # themselves, keeping startup fast on large mailboxes.
+            for data_dir in mbox_dir.glob("*/Data"):
+                for messages_dir in data_dir.glob("*/*/*/Messages"):
+                    if messages_dir.is_dir():
+                        self._messages_dirs.append(messages_dir)
         logger.info("Found %d mailbox message directories", len(self._messages_dirs))
 
     def _connect(self) -> sqlite3.Connection:

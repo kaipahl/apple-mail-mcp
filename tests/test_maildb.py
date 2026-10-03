@@ -255,6 +255,62 @@ class TestFindEmlxPath:
         assert self.db._find_emlx_path(7) == emlx
 
 
+# -- Messages/ directory scanning -------------------------------------------------
+
+
+class TestScanMessagesDirs:
+    def _make_db(self, mail_dir: Path) -> MailDatabase:
+        db = object.__new__(MailDatabase)
+        db.mail_dir = mail_dir
+        db.v10_dir = mail_dir / "V10"
+        return db
+
+    def test_finds_old_layout(self, tmp_path: Path):
+        messages = tmp_path / "V10" / "INBOX.mbox" / "Messages"
+        messages.mkdir(parents=True)
+
+        db = self._make_db(tmp_path)
+        db._scan_messages_dirs()
+
+        assert messages in db._messages_dirs
+
+    def test_finds_current_nested_layout(self, tmp_path: Path):
+        messages = (tmp_path / "V10" / "INBOX.mbox" / "225623EF-4AA1"
+                    / "Data" / "7" / "8" / "2" / "Messages")
+        messages.mkdir(parents=True)
+
+        db = self._make_db(tmp_path)
+        db._scan_messages_dirs()
+
+        assert messages in db._messages_dirs
+
+    def test_finds_both_layouts_across_mboxes(self, tmp_path: Path):
+        old_layout = tmp_path / "V10" / "INBOX.mbox" / "Messages"
+        new_layout = (tmp_path / "V10" / "Archive.mbox" / "UUID-1"
+                      / "Data" / "0" / "0" / "1" / "Messages")
+        old_layout.mkdir(parents=True)
+        new_layout.mkdir(parents=True)
+
+        db = self._make_db(tmp_path)
+        db._scan_messages_dirs()
+
+        assert set(db._messages_dirs) == {old_layout, new_layout}
+
+    def test_ignores_v10_without_mboxes(self, tmp_path: Path):
+        (tmp_path / "V10" / "MailData").mkdir(parents=True)
+
+        db = self._make_db(tmp_path)
+        db._scan_messages_dirs()
+
+        assert db._messages_dirs == []
+
+    def test_handles_missing_v10(self, tmp_path: Path):
+        db = self._make_db(tmp_path)
+        db._scan_messages_dirs()
+
+        assert db._messages_dirs == []
+
+
 # -- Body search with early termination -----------------------------------------
 
 

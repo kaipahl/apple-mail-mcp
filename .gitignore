@@ -11,3 +11,5 @@ venv/
 .env
 .python-version
 .claude/settings.local.json
+.idea/
+html/

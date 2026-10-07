@@ -37,7 +37,13 @@ def _get_db() -> MailDatabase:
 
 @app.tool()
 def list_accounts() -> str:
-    """List configured mail accounts."""
+    """List mail accounts with name, email address and active state.
+
+    Each account includes its own INBOX id and message count. Several
+    accounts have a mailbox named "INBOX" — use this tool to find the right
+    one instead of adding them up. Accounts with active=false are no longer
+    configured in macOS; their mail is only a local cache.
+    """
     try:
         return json.dumps(_get_db().list_accounts(), indent=2)
     except Exception as exc:
@@ -48,8 +54,8 @@ def list_accounts() -> str:
 def list_mailboxes() -> str:
     """List all mailboxes / folders with message counts and unread counts.
 
-    Returns mailbox id, display name, full URL, total messages, and unread
-    count.  Use the mailbox id with search_emails to restrict results to a
+    Returns mailbox id, display name, owning account (email) and account_id,
+    full URL, total messages, and unread count.  Use the mailbox id with search_emails to restrict results to a
     single folder.
     """
     try:

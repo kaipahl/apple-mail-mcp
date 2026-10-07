@@ -1,0 +1,52 @@
+{
+  "manifest_version": "0.4",
+  "name": "apple-mail-mcp",
+  "display_name": "Apple Mail (read-only)",
+  "version": "0.2.0",
+  "description": "Read-only access to Apple Mail on macOS via Mail's local SQLite index and .emlx files.",
+  "long_description": "Searches and reads email directly from Apple Mail's local database (`~/Library/Mail/V10`) without AppleScript. Designed for large mailboxes (100K+ messages) with SQL-level filtering and pagination. Strictly read-only: no sending, moving or deleting.\n\n**Requires Full Disk Access for the `uv` binary** (e.g. `~/.local/bin/uv`; System Settings → Privacy & Security → Full Disk Access) — Claude launches the server via `uv`, so granting it to Claude.app is not enough. Without it the server fails with `unable to open database file`.",
+  "author": {
+    "name": "Kai Pahl",
+    "url": "https://github.com/kaipahl"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kaipahl/apple-mail-mcp.git"
+  },
+  "homepage": "https://github.com/kaipahl/apple-mail-mcp",
+  "support": "https://github.com/kaipahl/apple-mail-mcp/issues",
+  "server": {
+    "type": "uv",
+    "entry_point": "apple_mail_mcp/server.py",
+    "mcp_config": {
+      "command": "uv",
+      "args": ["run", "--directory", "${__dirname}", "apple-mail-mcp"]
+    }
+  },
+  "tools": [
+    {
+      "name": "list_accounts",
+      "description": "List configured mail accounts"
+    },
+    {
+      "name": "list_mailboxes",
+      "description": "List all mailboxes with message and unread counts"
+    },
+    {
+      "name": "search_emails",
+      "description": "Search and filter emails by sender, subject, date range, mailbox and read status (paginated)"
+    },
+    {
+      "name": "read_email",
+      "description": "Read the full content of a single email by ID"
+    }
+  ],
+  "compatibility": {
+    "platforms": ["darwin"],
+    "runtimes": {
+      "python": ">=3.10"
+    }
+  },
+  "keywords": ["email", "apple-mail", "macos", "read-only"],
+  "license": "MIT"
+}

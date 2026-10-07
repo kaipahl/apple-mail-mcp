@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "apple-mail-mcp"
-version = "0.1.0"
+version = "0.2.0"
 description = "A lightweight, read-only MCP server for Apple Mail. Designed for large mailboxes."
 readme = "README.md"
 license = "MIT"

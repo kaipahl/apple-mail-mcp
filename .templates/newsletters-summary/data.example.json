@@ -3,9 +3,9 @@
     "kicker": "Newsletter Digest · Apple Mail Inbox",
     "title": "TLDR Inbox Digest",
     "subtitle": "Every story from the TLDR family of newsletters — TLDR, TLDR AI and TLDR Dev — each with its original text, an eight-word summary and its link. Duplicates sharing a URL or headline were merged into one entry.",
-    "dateRange": "Sep 25 – Oct 2, 2057",
+    "dateRange": "Sep 25 – Oct 2, 2026",
     "summaryWords": 8,
-    "sourceNote": "Generated from 18 newsletters sent by TLDR <dan@tldrnewsletter.com> between Sep 25 and Oct 2, 2057 (TLDR · TLDR AI · TLDR Dev, six issues each).",
+    "sourceNote": "Generated from 18 newsletters sent by TLDR <dan@tldrnewsletter.com> between Sep 25 and Oct 2, 2026 (TLDR · TLDR AI · TLDR Dev, six issues each).",
     "footerNotes": [
       "Sponsored promotions and TLDR house ads were excluded. Entries appearing in multiple issues were merged when they shared the same URL or the same headline. Each summary is exactly eight words."
     ]
@@ -20,7 +20,7 @@
   "newsletters": ["TLDR", "TLDR Dev", "TLDR AI"],
   "days": [
     {
-      "date": "2057-10-02",
+      "date": "2026-10-02",
       "entries": [
         {
           "headline": "STARLINK 'COMMUNITY SITE' PROGRAM TEASES HOURLY, WEEKLY INTERNET PASSES",
@@ -51,7 +51,7 @@
       ]
     },
     {
-      "date": "2057-09-29",
+      "date": "2026-09-29",
       "entries": [
         {
           "headline": "SPACEX'S STARSHIP MAKES IT TO ORBIT FOR THE FIRST TIME, BUT RETURNS TO EARTH EARLY",
@@ -61,8 +61,8 @@
           "text": "SpaceX's Starship reached orbit for the first time on its 14th test flight, but the spacecraft returned to Earth earlier than planned. Achieving orbital flight allows Starship to deploy satellites and travel to more distant destinations.",
           "url": "https://links.tldrnewsletter.com/gGvv3P",
           "sources": [
-            { "newsletter": "TLDR", "date": "2057-09-29" },
-            { "newsletter": "TLDR", "date": "2057-09-28" }
+            { "newsletter": "TLDR", "date": "2026-09-29" },
+            { "newsletter": "TLDR", "date": "2026-09-28" }
           ]
         },
         {
@@ -77,7 +77,7 @@
       ]
     },
     {
-      "date": "2057-09-25",
+      "date": "2026-09-25",
       "entries": [
         {
           "headline": "JEFF BEZOS' BLUE ORIGIN IS FUELED WITH $30 BILLION OF HIS FORTUNE",

@@ -31,8 +31,10 @@ interpret them; do not assume a fixed sender such as "TLDR":
 
 ## Procedure
 
-1. **Resolve the mailbox.** Call `list_mailboxes` and use the `mailbox_id` of
-   the mailbox with display name `INBOX`. Always pass `mailbox_id` to
+1. **Resolve the mailbox.** Call `list_accounts` and use the `inbox_id` of
+   the account the user means (default: `kai@kaipahl.de`; ask if unclear).
+   Several accounts each have a mailbox named `INBOX` — never pick one by name
+   alone, and never add them up. Always pass `mailbox_id` to
    `search_emails` — without it the search silently spans *all* mailboxes and
    deleted/archived mail pollutes the result (see *Known data quirks* in
    `AGENTS.md`).
@@ -55,10 +57,8 @@ interpret them; do not assume a fixed sender such as "TLDR":
    gist of the entry text, not just its first words.
 6. **Analyze the whole set**: identify the **two trending topics** across the
    entries and a **four-word mood summary**.
-7. **Sanity-check dates.** This machine's `apple_mail` MCP has returned dates
-   offset by +31 years (2057 instead of 2026). Compare against the current
-   date and correct implausible years before rendering (details and
-   background in `AGENTS.md`, *Known data quirks*).
+7. **Sanity-check dates.** Dates must not lie in the future. If they do,
+   stop and report it as a server bug — do not shift years by hand.
 8. **Build the page with the repository template**, following the procedure
    and schema in `.templates/newsletters-summary/README.md`:
    - Template: `.templates/newsletters-summary/template.html` (fill via

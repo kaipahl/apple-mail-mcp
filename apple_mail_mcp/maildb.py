@@ -13,12 +13,17 @@ from datetime import datetime, timezone
 from email.header import decode_header
 from pathlib import Path
 from typing import Any, Optional
-from urllib.parse import unquote
+from urllib.parse import unquote, urlsplit
 
 logger = logging.getLogger(__name__)
 
-# Core Data epoch offset: seconds between 1970-01-01 and 2001-01-01
-_CORE_DATA_EPOCH = 978307200
+# Mail's Envelope Index stores date_received / date_sent as Unix epoch
+# seconds (not Core Data's 2001-based epoch).
+
+# Status of each macOS account (name, address, active) lives in the system
+# Accounts database, keyed by the UUID that appears in mailbox URLs.
+_ACCOUNTS_DB = Path.home() / "Library" / "Accounts" / "Accounts4.sqlite"
+_LOCAL_ACCOUNT = "On My Mac"
 
 _EMLX_SUFFIXES = (".emlx", ".partial.emlx")
 _EXTRA_HEADERS = ("to", "cc", "reply-to")
@@ -53,8 +58,11 @@ def _escape_like(value: str) -> str:
 class MailDatabase:
     """Read-only interface to Apple Mail's local database."""
 
-    def __init__(self, mail_dir: Optional[str] = None):
+    def __init__(
+        self, mail_dir: Optional[str] = None, accounts_db: Optional[str] = None
+    ):
         self.mail_dir = Path(mail_dir) if mail_dir else Path.home() / "Library" / "Mail"
+        self.accounts_db = Path(accounts_db) if accounts_db else _ACCOUNTS_DB
         self.v10_dir = self.mail_dir / "V10"
         self.db_path = self.v10_dir / "MailData" / "Envelope Index"
 
@@ -105,26 +113,30 @@ class MailDatabase:
         return conn
 
     @staticmethod
-    def _core_data_to_iso(timestamp: Optional[float]) -> Optional[str]:
-        """Convert Core Data timestamp to ISO 8601 string."""
+    def _unix_to_iso(timestamp: Optional[float]) -> Optional[str]:
+        """Convert a Unix timestamp to an ISO 8601 string."""
         if timestamp is None:
             return None
         try:
-            dt = datetime.fromtimestamp(
-                timestamp + _CORE_DATA_EPOCH, tz=timezone.utc
-            )
-            return dt.isoformat()
-        except (OSError, ValueError):
+            return datetime.fromtimestamp(timestamp, tz=timezone.utc).isoformat()
+        except (OSError, OverflowError, ValueError):
             return None
 
     @staticmethod
-    def _iso_to_core_data(iso_str: str) -> Optional[float]:
-        """Convert an ISO date string to a Core Data timestamp."""
+    def _iso_to_unix(iso_str: str, end_of_day: bool = False) -> Optional[float]:
+        """Convert an ISO date string to a Unix timestamp.
+
+        With ``end_of_day``, a date without time ("2025-12-31") resolves to
+        the last second of that day, so ``date_to`` is inclusive.
+        """
         try:
             dt = datetime.fromisoformat(iso_str)
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=timezone.utc)
-            return dt.timestamp() - _CORE_DATA_EPOCH
+            ts = dt.timestamp()
+            if end_of_day and len(iso_str) == 10:
+                ts += 86399
+            return ts
         except ValueError:
             return None
 
@@ -156,6 +168,48 @@ class MailDatabase:
             return unquote(url.split("/")[-1]).replace(".mbox", "")
         return url
 
+    @staticmethod
+    def _account_id(url: str) -> Optional[str]:
+        """Extract the account UUID from a mailbox URL.
+
+        ``imap://<uuid>/INBOX`` → ``<uuid>``; ``local://…`` → "On My Mac".
+        """
+        parts = urlsplit(url or "")
+        if parts.scheme == "local":
+            return _LOCAL_ACCOUNT
+        return parts.netloc or None
+
+    def _load_accounts(self) -> dict[str, dict[str, Any]]:
+        """Map account UUIDs to name, address and active state.
+
+        Reads the macOS Accounts database. Child accounts (e.g. the mail
+        part of a Google account) inherit the parent's username. Returns
+        an empty dict if the database is unreadable, so callers degrade
+        to bare UUIDs instead of failing.
+        """
+        try:
+            conn = sqlite3.connect(f"file:{self.accounts_db}?mode=ro", uri=True)
+        except sqlite3.Error:
+            return {}
+        try:
+            with closing(conn):
+                rows = conn.execute("""
+                    SELECT a.ZIDENTIFIER,
+                           a.ZACCOUNTDESCRIPTION,
+                           COALESCE(a.ZUSERNAME, p.ZUSERNAME),
+                           a.ZACTIVE
+                    FROM ZACCOUNT a
+                    LEFT JOIN ZACCOUNT p ON a.ZPARENTACCOUNT = p.Z_PK
+                    WHERE a.ZIDENTIFIER IS NOT NULL
+                """).fetchall()
+        except sqlite3.Error as exc:
+            logger.warning("Could not read accounts database: %s", exc)
+            return {}
+        return {
+            ident: {"name": name, "email": username, "active": bool(active)}
+            for ident, name, username, active in rows
+        }
+
     def _format_sender(self, name: str, address: str) -> str:
         """Format sender for display."""
         decoded_name = self._decode_mime_header(name)
@@ -171,7 +225,7 @@ class MailDatabase:
                 row["sender_name"], row["sender_address"]
             ),
             "subject": self._decode_mime_header(row["subject"]),
-            "date": self._core_data_to_iso(row["date_received"]),
+            "date": self._unix_to_iso(row["date_received"]),
             "mailbox": self._mailbox_display_name(row["mailbox_url"]),
             "mailbox_id": row["mailbox_id"],
             "read": bool(row["read"]),
@@ -191,26 +245,45 @@ class MailDatabase:
     # ------------------------------------------------------------------
 
     def list_accounts(self) -> list[dict[str, Any]]:
-        """List mail accounts derived from mailbox URLs."""
-        with closing(self._connect()) as conn:
-            cursor = conn.execute(
-                "SELECT DISTINCT url FROM mailboxes WHERE url IS NOT NULL AND url != ''"
-            )
-            accounts: dict[str, dict[str, str]] = {}
-            for row in cursor:
-                url: str = row["url"]
-                for segment in url.split("/"):
-                    if "@" in segment:
-                        acct = unquote(segment)
-                        if acct not in accounts:
-                            accounts[acct] = {"account": acct}
-                        break
-            if not accounts:
-                return [{"info": "Could not extract accounts. Use list_mailboxes instead."}]
-            return list(accounts.values())
+        """List mail accounts that own at least one mailbox.
+
+        Each entry carries the account id (UUID from the mailbox URLs),
+        display name, email address, active state, and its INBOX id and
+        message count so callers need not guess which INBOX is whose.
+        """
+        known = self._load_accounts()
+        accounts: dict[str, dict[str, Any]] = {}
+        for mb in self.list_mailboxes():
+            acct_id = mb["account_id"]
+            if acct_id is None:
+                continue
+            acct = accounts.setdefault(acct_id, {
+                **self._account_info(acct_id, known),
+                "inbox_id": None,
+                "inbox_messages": 0,
+                "total_messages": 0,
+            })
+            acct["total_messages"] += mb["total_messages"]
+            if mb["name"].upper() == "INBOX":
+                acct["inbox_id"] = mb["id"]
+                acct["inbox_messages"] = mb["total_messages"]
+        return sorted(accounts.values(), key=lambda a: a["name"].lower())
+
+    @staticmethod
+    def _account_info(
+        acct_id: str, known: dict[str, dict[str, Any]]
+    ) -> dict[str, Any]:
+        if acct_id == _LOCAL_ACCOUNT:
+            return {"id": acct_id, "name": acct_id, "email": None, "active": True}
+        info = known.get(acct_id)
+        if info is None:
+            # Not in the Accounts DB: removed account whose mail is still cached.
+            return {"id": acct_id, "name": acct_id, "email": None, "active": False}
+        return {"id": acct_id, **info, "name": info["name"] or acct_id}
 
     def list_mailboxes(self) -> list[dict[str, Any]]:
-        """List all mailboxes with message and unread counts."""
+        """List all mailboxes with owning account, message and unread counts."""
+        known = self._load_accounts()
         with closing(self._connect()) as conn:
             cursor = conn.execute("""
                 SELECT
@@ -229,12 +302,21 @@ class MailDatabase:
                 {
                     "id": row["id"],
                     "name": self._mailbox_display_name(row["url"]),
+                    "account_id": self._account_id(row["url"]),
+                    "account": self._account_label(row["url"], known),
                     "url": row["url"] or "",
                     "total_messages": row["total_messages"],
                     "unread": row["unread_count"] or 0,
                 }
                 for row in cursor
             ]
+
+    def _account_label(self, url: str, known: dict[str, dict[str, Any]]) -> Optional[str]:
+        acct_id = self._account_id(url)
+        if acct_id is None:
+            return None
+        info = self._account_info(acct_id, known)
+        return info["email"] or info["name"]
 
     # ------------------------------------------------------------------
     # Body search via .emlx file scanning
@@ -335,13 +417,13 @@ class MailDatabase:
             params.extend([like_q, like_q, like_q])
 
         if date_from:
-            ts = self._iso_to_core_data(date_from)
+            ts = self._iso_to_unix(date_from)
             if ts is not None:
                 conditions.append("m.date_received >= ?")
                 params.append(ts)
 
         if date_to:
-            ts = self._iso_to_core_data(date_to)
+            ts = self._iso_to_unix(date_to, end_of_day=True)
             if ts is not None:
                 conditions.append("m.date_received <= ?")
                 params.append(ts)

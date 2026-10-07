@@ -7,41 +7,43 @@ import email
 import email.policy
 from pathlib import Path
 
-from apple_mail_mcp.maildb import MailDatabase, _CORE_DATA_EPOCH, _escape_like
+from apple_mail_mcp.maildb import MailDatabase, _escape_like
 
 
 # -- Timestamp conversion -----------------------------------------------------
 
 
-class TestCoreDataToIso:
+class TestUnixToIso:
     def test_known_date(self):
-        # 2025-01-01T00:00:00+00:00 as Core Data timestamp
-        cd_ts = 1735689600.0 - _CORE_DATA_EPOCH
-        result = MailDatabase._core_data_to_iso(cd_ts)
-        assert result == "2025-01-01T00:00:00+00:00"
+        # Envelope Index stores Unix seconds; must not be shifted by +31 years
+        assert MailDatabase._unix_to_iso(1735689600) == "2025-01-01T00:00:00+00:00"
 
     def test_none_returns_none(self):
-        assert MailDatabase._core_data_to_iso(None) is None
+        assert MailDatabase._unix_to_iso(None) is None
 
     def test_invalid_timestamp_returns_none(self):
-        assert MailDatabase._core_data_to_iso(-1e18) is None
+        assert MailDatabase._unix_to_iso(-1e18) is None
 
 
-class TestIsoToCoreData:
+class TestIsoToUnix:
     def test_roundtrip(self):
         iso = "2025-06-15T12:00:00+00:00"
-        cd_ts = MailDatabase._iso_to_core_data(iso)
-        assert cd_ts is not None
-        result = MailDatabase._core_data_to_iso(cd_ts)
-        assert result == iso
+        ts = MailDatabase._iso_to_unix(iso)
+        assert ts is not None
+        assert MailDatabase._unix_to_iso(ts) == iso
 
     def test_naive_datetime_treated_as_utc(self):
-        cd1 = MailDatabase._iso_to_core_data("2025-01-01")
-        cd2 = MailDatabase._iso_to_core_data("2025-01-01T00:00:00+00:00")
-        assert cd1 == cd2
+        assert MailDatabase._iso_to_unix("2025-01-01") == 1735689600
+
+    def test_end_of_day_makes_date_inclusive(self):
+        assert MailDatabase._iso_to_unix("2025-01-01", end_of_day=True) == 1735689600 + 86399
+
+    def test_end_of_day_ignored_with_explicit_time(self):
+        iso = "2025-01-01T12:00:00+00:00"
+        assert MailDatabase._iso_to_unix(iso, end_of_day=True) == MailDatabase._iso_to_unix(iso)
 
     def test_invalid_string_returns_none(self):
-        assert MailDatabase._iso_to_core_data("not-a-date") is None
+        assert MailDatabase._iso_to_unix("not-a-date") is None
 
 
 # -- MIME header decoding ------------------------------------------------------

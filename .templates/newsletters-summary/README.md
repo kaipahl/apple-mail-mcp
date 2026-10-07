@@ -33,7 +33,7 @@ pure static HTML with inline CSS.
     "kicker": "Newsletter Digest · Apple Mail Inbox",   // small label above the h1
     "title": "TLDR Inbox Digest",                       // page <title> + h1
     "subtitle": "Every story from …",                   // paragraph under the h1
-    "dateRange": "Sep 25 – Oct 2, 2057",                // used in <title>
+    "dateRange": "Sep 25 – Oct 2, 2026",                // used in <title>
     "summaryWords": 8,                                  // default: 8 (drives warnings + label)
     "mergedLabel": "merged from {n} issues",            // optional, {n} = source count
     "entryNounSingular": "story",                       // optional counters wording
@@ -48,8 +48,8 @@ pure static HTML with inline CSS.
                                                         // or { "name": "…", "badgeClass": "p4" }
   "days": [                                             // newest first
     {
-      "date": "2057-10-02",                             // ISO; weekday label auto-generated
-      "label": "Tuesday, Oct 2, 2057",                  // optional override
+      "date": "2026-10-02",                             // ISO; weekday label auto-generated
+      "label": "Friday, Oct 2, 2026",                  // optional override
       "entries": [
         {
           "headline": "INTRODUCING CLEF …",             // card title
@@ -59,7 +59,7 @@ pure static HTML with inline CSS.
           "text": "Clef and Clef-flash are fully Jev-API …",   // original newsletter text
           "url": "https://blog.cloudflare.com/…?utm_source=tldrai",  // tracking params stripped automatically
           "sources": ["TLDR", "TLDR Dev", "TLDR AI"]    // same-day sources (strings)
-                                                        // or { "newsletter": "TLDR", "date": "2057-09-28" }
+                                                        // or { "newsletter": "TLDR", "date": "2026-09-28" }
                                                         // 2+ sources → "⧉ merged from N issues" chip
         }
       ]
@@ -79,7 +79,7 @@ pure static HTML with inline CSS.
 
 ### Auto-derived conveniences
 
-- **Day labels** — `Tuesday, Oct 2, 2057` computed from `date` if `label` is absent.
+- **Day labels** — `Friday, Oct 2, 2026` computed from `date` if `label` is absent.
 - **Badge colors** — newsletters get palette classes `p1…p8` (see CSS vars) by
   order; override per newsletter with `badgeClass`. More than 8 sources cycle.
 - **Merged chips** — entries with 2+ `sources` get the gold `⧉ merged from N
@@ -91,11 +91,9 @@ pure static HTML with inline CSS.
 
 - **Validation warnings** — the builder warns when a `summary` doesn't have
   `meta.summaryWords` words (default 8) or a URL is missing.
-- **Data quality** — verify `date` values are plausible ISO dates for the
-  real world before rendering. (On this machine the `apple_mail` MCP has
-  returned dates offset +31 years — 2057 instead of 2026; see the *Known
-  data quirks* section of the repository `AGENTS.md`. The template renders
-  whatever it is given, including wrong years.)
+- **Data quality** — verify `date` values are plausible ISO dates before
+  rendering. The template renders whatever it is given, including wrong
+  years.
 
 ## Using another template engine
 

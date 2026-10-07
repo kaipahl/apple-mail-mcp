@@ -25,18 +25,34 @@ AppleScript needed for reading. Designed for large mailboxes (tested with
 
 ## Installation
 
-### With `uvx` (recommended)
+### As a Claude Desktop Extension (`.mcpb`)
 
-Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+Build the bundle from a checkout:
+
+```bash
+git clone https://github.com/kaipahl/apple-mail-mcp
+cd apple-mail-mcp
+npx @anthropic-ai/mcpb pack
+```
+
+Then double-click the generated `apple-mail-mcp.mcpb` (or drag it into
+**Claude Desktop → Settings → Extensions**). The extension uses the `uv`
+server type: Claude Desktop installs the dependencies from `pyproject.toml`
+itself, no bundled virtualenv needed. Files excluded from the bundle are
+listed in `.mcpbignore`.
+
+### Via `claude_desktop_config.json` with `uvx`
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
     "apple-mail": {
-      "command": "uvx",
+      "command": "/opt/homebrew/bin/uvx",
       "args": [
         "--from",
-        "git+https://github.com/BastianZim/apple-mail-mcp",
+        "git+https://github.com/kaipahl/apple-mail-mcp",
         "apple-mail-mcp"
       ]
     }
@@ -44,38 +60,59 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 }
 ```
 
-Restart Claude Desktop after saving.
+Use the absolute path to `uvx` (`which uvx`) — Claude Desktop does not
+inherit your shell's `PATH`. Restart Claude Desktop after saving.
 
-### From source
+### From a local checkout
 
 ```bash
-git clone https://github.com/BastianZim/apple-mail-mcp
+git clone https://github.com/kaipahl/apple-mail-mcp
 cd apple-mail-mcp
 uv run apple-mail-mcp
+```
+
+To point Claude Desktop at the checkout instead of the Git URL:
+
+```json
+{
+  "mcpServers": {
+    "apple-mail": {
+      "command": "/opt/homebrew/bin/uv",
+      "args": ["--directory", "/path/to/apple-mail-mcp", "run", "apple-mail-mcp"]
+    }
+  }
+}
 ```
 
 ## Requirements
 
 - macOS 10.15+ (Catalina or later)
-- Python 3.10+
+- Python 3.10+ (handled by `uv` when installed as an extension)
 - Apple Mail configured with at least one account
-- **Full Disk Access** for the process running the server (see below)
+- **Full Disk Access** (see below)
 
 ### macOS permissions
 
 Apple Mail's database lives in `~/Library/Mail/`, which macOS protects.
-You must grant **Full Disk Access** to the process that runs the MCP server.
+The server needs **Full Disk Access**. Claude Desktop launches MCP servers
+through a helper that disclaims responsibility for the child process, so
+macOS attributes the access to the **first launched binary** — not to
+Claude.app and not to the Python interpreter:
 
-For **Claude Desktop** using `uvx`:
+| Installed via | Grant Full Disk Access to |
+|---|---|
+| `.mcpb` extension | `uv` (`which uv`, e.g. `~/.local/bin/uv`) |
+| config with `uvx` | `uvx` (`which uvx`) |
+| config with `uv run` | `uv` |
 
 1. Open **System Settings → Privacy & Security → Full Disk Access**
-2. Click the **+** button
-3. Add the `uvx` binary (typically at `/opt/homebrew/bin/uvx`)
-4. Restart Claude Desktop
+2. Click **+**, press ⌘⇧G and paste the binary's path
+3. Restart Claude Desktop (or disable/re-enable the extension)
 
 Without this, the server will fail with `unable to open database file`.
 
-> **Tip:** To find where `uvx` lives on your system, run `which uvx` in your terminal.
+> **Security note:** The grant applies to *everything* run through that
+> binary, not just this server.
 
 ## How it works
 
